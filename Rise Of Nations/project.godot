@@ -8,10 +8,12 @@
 
 config_version=5
 
+"ï»¿config_version"=5
+
 [application]
 
 config/name="Rise Of Nations"
-run/main_scene="uid://cmxamwca70yfn"
+run/main_scene="uid://chye85iqe44w3"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
