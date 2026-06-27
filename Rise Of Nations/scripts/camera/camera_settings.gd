@@ -1,0 +1,7 @@
+﻿extends RefCounted
+
+const DEFAULT_CAMERA_ZOOM := 0.8
+const MIN_CAMERA_ZOOM := 0.55
+const MAX_CAMERA_ZOOM := 1.35
+const CAMERA_ZOOM_STEP := 0.1
+const CAMERA_LIMIT_PADDING := 700.0

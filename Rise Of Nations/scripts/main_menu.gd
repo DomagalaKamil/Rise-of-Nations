@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 const GAME_SCENE := "res://scenes/main_scene.tscn"
 
 # Called when the node enters the scene tree for the first time.
@@ -24,4 +24,3 @@ func _on_play_pressed() -> void:
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()
-

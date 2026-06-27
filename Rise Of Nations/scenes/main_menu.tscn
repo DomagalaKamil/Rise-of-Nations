@@ -1,7 +1,7 @@
-﻿[gd_scene format=3 uid="uid://chye85iqe44w3"]
+[gd_scene format=3 uid="uid://bpsh7isex2r0a"]
 
 [ext_resource type="Script" uid="uid://c60fbwg488778" path="res://scripts/main_menu.gd" id="1_7vrkn"]
-[ext_resource type="Texture2D" uid="uid://ckyd0psmttvrq" path="res://art/rise_of_nations_logo.png" id="2_fu7sn"]
+[ext_resource type="Texture2D" uid="uid://bu38t8y51785h" path="res://art/rise_of_nations_logo.png" id="2_fu7sn"]
 
 [node name="Control" type="Control" unique_id=142439903]
 layout_mode = 3
@@ -47,4 +47,3 @@ texture = ExtResource("2_fu7sn")
 
 [connection signal="pressed" from="Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="Exit" to="." method="_on_exit_pressed"]
-
