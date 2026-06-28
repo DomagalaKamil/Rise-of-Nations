@@ -5,11 +5,14 @@ const MapGenerator = preload("res://scripts/map/map_generator.gd")
 const BuildingPlacement = preload("res://scripts/buildings/building_placement.gd")
 const CameraController = preload("res://scripts/camera/camera_controller.gd")
 const BuildMenu = preload("res://scripts/ui/build_menu.gd")
+const BuildingUpgradeMenu = preload("res://scripts/ui/building_upgrade_menu.gd")
 
 @onready var tile_map_layer: TileMapLayer = $Node2D/TileMapLayer
 
 var selected_cell := Vector2i.ZERO
 var selected_terrain := ""
+var selected_building_cell := Vector2i.ZERO
+var selected_building_index := -1
 var map_tiles: Dictionary = {}
 var placed_buildings: Dictionary = {}
 var marker_layer: Node2D
@@ -17,6 +20,7 @@ var map_generator
 var building_placement
 var camera_controller
 var build_menu
+var building_upgrade_menu
 
 
 func _ready() -> void:
@@ -32,6 +36,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var world_position := get_global_mouse_position()
 		var cell := tile_map_layer.local_to_map(tile_map_layer.to_local(world_position))
 		_try_show_build_menu(cell, get_viewport().get_mouse_position())
+		building_upgrade_menu.hide()
 		return
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -51,12 +56,17 @@ func _setup_systems() -> void:
 
 	building_placement = BuildingPlacement.new()
 	building_placement.setup(tile_map_layer, marker_layer)
+	building_placement.building_clicked.connect(_on_building_clicked)
 
 	camera_controller = CameraController.new()
 
 	build_menu = BuildMenu.new()
 	build_menu.setup(self)
 	build_menu.building_selected.connect(_on_building_pressed)
+
+	building_upgrade_menu = BuildingUpgradeMenu.new()
+	building_upgrade_menu.setup(self)
+	building_upgrade_menu.upgrade_requested.connect(_on_building_upgrade_requested)
 
 
 func _generate_new_map() -> void:
@@ -112,3 +122,24 @@ func _on_building_pressed(building_name: String) -> void:
 		Defs.PLAYER_OWNER
 	)
 	_refresh_build_menu_deferred()
+
+
+func _on_building_clicked(cell: Vector2i, building_index: int, viewport_position: Vector2) -> void:
+	build_menu.hide()
+	selected_building_cell = cell
+	selected_building_index = building_index
+
+	var building_data: Dictionary = building_placement.get_building_data(map_tiles, cell, building_index)
+	if not building_data.is_empty():
+		building_upgrade_menu.show_for_building(building_data, viewport_position)
+	else:
+		building_upgrade_menu.hide()
+
+
+func _on_building_upgrade_requested(category_id: String) -> void:
+	if selected_building_index < 0:
+		return
+
+	if building_placement.apply_building_upgrade(map_tiles, selected_building_cell, selected_building_index, category_id):
+		var building_data: Dictionary = building_placement.get_building_data(map_tiles, selected_building_cell, selected_building_index)
+		building_upgrade_menu.refresh_deferred(building_data)

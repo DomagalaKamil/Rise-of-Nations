@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 const MAP_WIDTH := 20
 const MAP_HEIGHT := 10
@@ -7,7 +7,7 @@ const TILE_SOURCE_ID := 0
 const PLAYER_OWNER := "player"
 const NEUTRAL_OWNER := "neutral"
 const ICON_GRID_SIZE := Vector2i(3, 3)
-const BUILDING_ICON_DISPLAY_SIZE := Vector2(64, 64)
+const BUILDING_ICON_DISPLAY_SIZE := Vector2(128, 128)
 
 const BUILDING_ICONS := {
 	"castle": Vector2i(0, 0),

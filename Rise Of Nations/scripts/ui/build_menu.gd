@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 signal building_selected(building_name: String)
 
