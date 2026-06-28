@@ -1,12 +1,24 @@
-﻿extends RefCounted
+extends RefCounted
 
 const MAX_LEVEL := 5
 const BUILDING_UPGRADES := {
 	"farm": {
-		"water_supply": "Increase water supply",
-		"tool_quality": "Increase tool quality",
-		"workers_count": "Increase workers count",
-		"farmland": "Increase farmland",
+		"water_supply": {
+			"name": "Increase water supply",
+			"description": "Increase plant collections",
+		},
+		"tool_quality": {
+			"name": "Increase tool quality",
+			"description": "Increase production time",
+		},
+		"workers_count": {
+			"name": "Increase workers count",
+			"description": "Increase production time",
+		},
+		"farmland": {
+			"name": "Increase farmland",
+			"description": "Increase plant collections",
+		},
 	},
 }
 
@@ -26,6 +38,24 @@ static func create_default_upgrades(building_type: String) -> Dictionary:
 	for category_id in categories.keys():
 		upgrades[category_id] = 1
 	return upgrades
+
+
+static func get_upgrade_name(building_type: String, category_id: String) -> String:
+	var categories: Dictionary = get_upgrade_categories(building_type)
+	if not categories.has(category_id):
+		return category_id.capitalize()
+
+	var category_data: Dictionary = categories[category_id]
+	return str(category_data.get("name", category_id.capitalize()))
+
+
+static func get_upgrade_description(building_type: String, category_id: String) -> String:
+	var categories: Dictionary = get_upgrade_categories(building_type)
+	if not categories.has(category_id):
+		return ""
+
+	var category_data: Dictionary = categories[category_id]
+	return str(category_data.get("description", ""))
 
 
 static func get_upgrade_cost(next_level: int) -> Dictionary:

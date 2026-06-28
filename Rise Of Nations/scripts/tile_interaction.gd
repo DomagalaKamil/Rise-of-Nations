@@ -1,4 +1,4 @@
-﻿extends Node2D
+extends Node2D
 
 const Defs = preload("res://scripts/definitions/game_definitions.gd")
 const MapGenerator = preload("res://scripts/map/map_generator.gd")
@@ -28,6 +28,7 @@ var resource_hud
 var income_timer: Timer
 
 
+
 func _ready() -> void:
 	_create_marker_layer()
 	_setup_systems()
@@ -39,15 +40,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		var world_position := get_global_mouse_position()
-		var cell := tile_map_layer.local_to_map(tile_map_layer.to_local(world_position))
-		_try_show_build_menu(cell, get_viewport().get_mouse_position())
-		building_upgrade_menu.hide()
-		return
-
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		build_menu.hide()
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			_open_tile_menu_from_mouse()
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_open_tile_menu_from_mouse()
 
 	camera_controller.handle_input(event)
 
@@ -70,11 +68,13 @@ func _setup_systems() -> void:
 
 	build_menu = BuildMenu.new()
 	build_menu.setup(self)
-	build_menu.building_selected.connect(_on_building_pressed)
+	build_menu.build_requested.connect(_on_building_pressed)
+	build_menu.upgrade_requested.connect(_on_tile_menu_upgrade_requested)
 
 	building_upgrade_menu = BuildingUpgradeMenu.new()
 	building_upgrade_menu.setup(self)
 	building_upgrade_menu.upgrade_requested.connect(_on_building_upgrade_requested)
+	building_upgrade_menu.back_requested.connect(_on_upgrade_menu_back_requested)
 
 	resource_hud = ResourceHud.new()
 	resource_hud.setup(self)
@@ -111,20 +111,29 @@ func _place_starter_buildings() -> void:
 		)
 
 
-func _try_show_build_menu(cell: Vector2i, viewport_position: Vector2) -> void:
+func _open_tile_menu_from_mouse() -> void:
+	var world_position := get_global_mouse_position()
+	var cell := tile_map_layer.local_to_map(tile_map_layer.to_local(world_position))
+	_try_show_build_menu(cell)
+	building_upgrade_menu.hide()
+
+
+func _try_show_build_menu(cell: Vector2i) -> void:
 	if not map_tiles.has(cell):
 		build_menu.hide()
 		return
 
 	selected_cell = cell
 	selected_terrain = str(map_tiles[cell]["terrain_type"])
-	_show_build_menu(viewport_position)
+	selected_building_cell = cell
+	selected_building_index = -1
+	_show_build_menu()
 
 
-func _show_build_menu(viewport_position: Vector2) -> void:
+func _show_build_menu() -> void:
 	var existing_buildings: Array = building_placement.get_buildings_for_cell(map_tiles, selected_cell)
 	var max_buildings: int = building_placement.get_max_buildings_for_terrain(selected_terrain)
-	build_menu.show_for_tile(selected_terrain, existing_buildings, max_buildings, viewport_position)
+	build_menu.show_for_tile(selected_terrain, existing_buildings, max_buildings)
 
 
 func _refresh_build_menu_deferred() -> void:
@@ -145,14 +154,25 @@ func _on_building_pressed(building_name: String) -> void:
 	_refresh_build_menu_deferred()
 
 
-func _on_building_clicked(cell: Vector2i, building_index: int, viewport_position: Vector2) -> void:
-	build_menu.hide()
+func _on_tile_menu_upgrade_requested(building_index: int) -> void:
+	selected_building_cell = selected_cell
+	selected_building_index = building_index
+	_show_upgrade_menu_for_selected_building()
+
+
+func _on_building_clicked(cell: Vector2i, building_index: int, _viewport_position: Vector2) -> void:
+	selected_cell = cell
 	selected_building_cell = cell
 	selected_building_index = building_index
+	selected_terrain = str(map_tiles[cell]["terrain_type"])
+	_show_build_menu()
 
-	var building_data: Dictionary = building_placement.get_building_data(map_tiles, cell, building_index)
+
+func _show_upgrade_menu_for_selected_building() -> void:
+	build_menu.hide()
+	var building_data: Dictionary = building_placement.get_building_data(map_tiles, selected_building_cell, selected_building_index)
 	if not building_data.is_empty():
-		building_upgrade_menu.show_for_building(building_data, viewport_position)
+		building_upgrade_menu.show_for_building(building_data)
 	else:
 		building_upgrade_menu.hide()
 
@@ -167,6 +187,10 @@ func _on_building_upgrade_requested(category_id: String) -> void:
 		_recalculate_resources()
 
 
+func _on_upgrade_menu_back_requested() -> void:
+	_show_build_menu()
+
+
 func _on_income_timer_timeout() -> void:
 	player_resources.recalculate_from_map(map_tiles)
 	player_resources.collect_income()
@@ -176,4 +200,3 @@ func _on_income_timer_timeout() -> void:
 func _recalculate_resources() -> void:
 	player_resources.recalculate_from_map(map_tiles)
 	resource_hud.update_values(player_resources.get_state())
-
