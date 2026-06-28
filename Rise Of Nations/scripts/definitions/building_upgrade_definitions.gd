@@ -5,19 +5,19 @@ const BUILDING_UPGRADES := {
 	"farm": {
 		"water_supply": {
 			"name": "Increase water supply",
-			"description": "Increase plant collections",
+			"description": "Increase food harvested",
 		},
 		"tool_quality": {
 			"name": "Increase tool quality",
-			"description": "Increase production time",
+			"description": "Decrease production time",
 		},
 		"workers_count": {
 			"name": "Increase workers count",
-			"description": "Increase production time",
+			"description": "Decrease production time",
 		},
 		"farmland": {
 			"name": "Increase farmland",
-			"description": "Increase plant collections",
+			"description": "Increase food harvested",
 		},
 	},
 }

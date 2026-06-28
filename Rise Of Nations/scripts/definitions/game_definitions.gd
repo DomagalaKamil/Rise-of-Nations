@@ -36,7 +36,7 @@ const TERRAIN_ATLAS_COORDS := {
 	"rocks": Vector2i(1, 1),
 	"swamp": Vector2i(2, 1),
 	"wheat": Vector2i(3, 1),
-	"silver": Vector2i(0, 2),
+	"iron": Vector2i(0, 2),
 	"gold": Vector2i(1, 2),
 }
 
@@ -48,7 +48,7 @@ const TERRAIN_LABELS := {
 	"mountain": "Field of mountain",
 	"lake": "Field of lake",
 	"gold": "Field of gold",
-	"silver": "Field of silver",
+	"iron": "Field of iron",
 	"desert": "Field of desert",
 	"swamp": "Field of swamp",
 }
@@ -61,12 +61,12 @@ const TERRAIN_WEIGHTS := [
 	{"terrain": "swamp", "weight": 6},
 	{"terrain": "rocks", "weight": 8},
 	{"terrain": "mountain", "weight": 5},
-	{"terrain": "silver", "weight": 4},
+	{"terrain": "iron", "weight": 4},
 	{"terrain": "gold", "weight": 2},
 ]
 
-const MINEABLE_TERRAINS := ["rocks", "silver", "gold"]
-const RESOURCE_TERRAINS := ["rocks", "silver", "gold"]
+const MINEABLE_TERRAINS := ["rocks", "iron", "gold"]
+const RESOURCE_TERRAINS := ["rocks", "iron", "gold"]
 
 const ALLOWED_BUILDINGS_BY_TERRAIN := {
 	"grass": ["village", "castle"],
@@ -74,7 +74,7 @@ const ALLOWED_BUILDINGS_BY_TERRAIN := {
 	"forest": ["sawmill"],
 	"lake": ["fishing"],
 	"gold": ["mine"],
-	"silver": ["mine"],
+	"iron": ["mine"],
 	"rocks": ["mine"],
 	"swamp": [],
 	"mountain": [],

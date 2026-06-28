@@ -12,6 +12,8 @@ var menu_panel: PanelContainer
 var title_label: Label
 var upgrade_buttons: VBoxContainer
 var info_label: Label
+var alert_label: Label
+var alert_message_id := 0
 
 
 func setup(parent: Node) -> void:
@@ -59,6 +61,12 @@ func setup(parent: Node) -> void:
 	info_label.modulate = Color(1.0, 1.0, 1.0, 0.75)
 	list.add_child(info_label)
 
+	alert_label = Label.new()
+	alert_label.text = "Can't afford at this time"
+	alert_label.modulate = Color(1.0, 0.18, 0.18, 1.0)
+	alert_label.visible = false
+	list.add_child(alert_label)
+
 	upgrade_buttons = VBoxContainer.new()
 	upgrade_buttons.add_theme_constant_override("separation", 10)
 	list.add_child(upgrade_buttons)
@@ -74,15 +82,31 @@ func refresh_deferred(building_data: Dictionary) -> void:
 	call_deferred("_refresh", building_data)
 
 
+func show_alert(message: String) -> void:
+	if alert_label == null or menu_layer == null:
+		return
+
+	alert_message_id += 1
+	alert_label.text = message
+	alert_label.visible = true
+	var timer: SceneTreeTimer = menu_layer.get_tree().create_timer(2.0)
+	timer.timeout.connect(_hide_alert.bind(alert_message_id))
+
+
 func hide() -> void:
 	if menu_panel != null:
 		menu_panel.visible = false
+	if alert_label != null:
+		alert_label.visible = false
 	closed.emit()
 
 
 func _refresh(building_data: Dictionary) -> void:
 	for child in upgrade_buttons.get_children():
 		child.queue_free()
+
+	if alert_label != null:
+		alert_label.visible = false
 
 	var building_type: String = str(building_data.get("type", ""))
 	title_label.text = "%s Upgrades" % building_type.capitalize()
@@ -93,7 +117,7 @@ func _refresh(building_data: Dictionary) -> void:
 
 	var upgrades: Dictionary = building_data.get("upgrades", {})
 	var categories: Dictionary = BuildingUpgrades.get_upgrade_categories(building_type)
-	info_label.text = "Demo costs only"
+	info_label.text = "Upgrade costs are paid from your resources"
 
 	for category_value in categories.keys():
 		var category_id: String = str(category_value)
@@ -145,6 +169,11 @@ func _apply_panel_style(panel: PanelContainer) -> void:
 	panel_style.set_border_width_all(1)
 	panel_style.set_corner_radius_all(6)
 	panel.add_theme_stylebox_override("panel", panel_style)
+
+
+func _hide_alert(message_id: int) -> void:
+	if message_id == alert_message_id and alert_label != null:
+		alert_label.visible = false
 
 
 func _center_panel() -> void:

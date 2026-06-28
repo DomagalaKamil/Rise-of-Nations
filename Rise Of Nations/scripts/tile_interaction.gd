@@ -7,6 +7,7 @@ const CameraController = preload("res://scripts/camera/camera_controller.gd")
 const PlayerResources = preload("res://scripts/player/player_resources.gd")
 const BuildMenu = preload("res://scripts/ui/build_menu.gd")
 const BuildingUpgradeMenu = preload("res://scripts/ui/building_upgrade_menu.gd")
+const BuildingUpgrades = preload("res://scripts/definitions/building_upgrade_definitions.gd")
 const ResourceHud = preload("res://scripts/ui/resource_hud.gd")
 
 @onready var tile_map_layer: TileMapLayer = $Node2D/TileMapLayer
@@ -81,7 +82,7 @@ func _setup_systems() -> void:
 func _setup_income_timer() -> void:
 	income_timer = Timer.new()
 	income_timer.name = "IncomeTimer"
-	income_timer.wait_time = 30.0
+	income_timer.wait_time = 1.0
 	income_timer.autostart = true
 	income_timer.timeout.connect(_on_income_timer_timeout)
 	add_child(income_timer)
@@ -179,8 +180,24 @@ func _on_building_upgrade_requested(category_id: String) -> void:
 	if selected_building_index < 0:
 		return
 
+	var building_data: Dictionary = building_placement.get_building_data(map_tiles, selected_building_cell, selected_building_index)
+	if building_data.is_empty():
+		return
+
+	var upgrades: Dictionary = building_data.get("upgrades", {})
+	var current_level: int = int(upgrades.get(category_id, 1))
+	if not BuildingUpgrades.can_upgrade(current_level):
+		return
+
+	var next_level: int = current_level + 1
+	var upgrade_cost: Dictionary = BuildingUpgrades.get_upgrade_cost(next_level)
+	if not player_resources.can_afford_cost(upgrade_cost):
+		building_upgrade_menu.show_alert("Can't afford at this time")
+		return
+
 	if building_placement.apply_building_upgrade(map_tiles, selected_building_cell, selected_building_index, category_id):
-		var building_data: Dictionary = building_placement.get_building_data(map_tiles, selected_building_cell, selected_building_index)
+		player_resources.spend_cost(upgrade_cost)
+		building_data = building_placement.get_building_data(map_tiles, selected_building_cell, selected_building_index)
 		building_upgrade_menu.refresh_deferred(building_data)
 		_recalculate_resources()
 
@@ -191,7 +208,7 @@ func _on_upgrade_menu_back_requested() -> void:
 
 func _on_income_timer_timeout() -> void:
 	player_resources.recalculate_from_map(map_tiles)
-	player_resources.collect_income()
+	player_resources.collect_income(map_tiles, income_timer.wait_time)
 	resource_hud.update_values(player_resources.get_state())
 
 

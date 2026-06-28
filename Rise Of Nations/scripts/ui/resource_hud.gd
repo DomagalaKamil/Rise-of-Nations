@@ -4,22 +4,30 @@ const ICON_SIZE := Vector2(28, 28)
 const BAR_SIZE := Vector2(120, 12)
 const COIN_ICON := preload("res://art/coin_icon.png")
 const WOOD_ICON := preload("res://art/wood_icon.png")
+const FOOD_ICON := preload("res://art/food_icon.png")
 const POPULATION_ICON := preload("res://art/population_icon.png")
 const ROCK_ICON_PATH := "res://art/rock_icon.png"
+const IRON_ICON_PATH := "res://art/iron_icon.png"
 
 var canvas_layer: CanvasLayer
 var gold_label: Label
 var wood_label: Label
+var food_label: Label
 var rock_label: Label
+var iron_label: Label
 var population_label: Label
 var gold_bar: ProgressBar
 var wood_bar: ProgressBar
+var food_bar: ProgressBar
 var rock_bar: ProgressBar
+var iron_bar: ProgressBar
 var rock_icon: Texture2D
+var iron_icon: Texture2D
 
 
 func setup(parent: Node) -> void:
 	rock_icon = _load_icon_or_fallback(ROCK_ICON_PATH, WOOD_ICON)
+	iron_icon = _load_icon_or_fallback(IRON_ICON_PATH, rock_icon)
 
 	canvas_layer = CanvasLayer.new()
 	parent.add_child(canvas_layer)
@@ -29,7 +37,7 @@ func setup(parent: Node) -> void:
 	margin.offset_left = -190
 	margin.offset_top = 16
 	margin.offset_right = -16
-	margin.offset_bottom = 210
+	margin.offset_bottom = 310
 	canvas_layer.add_child(margin)
 
 	var panel := PanelContainer.new()
@@ -47,9 +55,17 @@ func setup(parent: Node) -> void:
 	wood_label = wood_widgets["label"] as Label
 	wood_bar = wood_widgets["bar"] as ProgressBar
 
+	var food_widgets: Dictionary = _create_capacity_resource(column, FOOD_ICON)
+	food_label = food_widgets["label"] as Label
+	food_bar = food_widgets["bar"] as ProgressBar
+
 	var rock_widgets: Dictionary = _create_capacity_resource(column, rock_icon)
 	rock_label = rock_widgets["label"] as Label
 	rock_bar = rock_widgets["bar"] as ProgressBar
+
+	var iron_widgets: Dictionary = _create_capacity_resource(column, iron_icon)
+	iron_label = iron_widgets["label"] as Label
+	iron_bar = iron_widgets["bar"] as ProgressBar
 
 	population_label = _create_population_resource(column)
 
@@ -59,8 +75,12 @@ func update_values(resource_state: Dictionary) -> void:
 	var gold_capacity: int = int(resource_state.get("gold_capacity", 0))
 	var wood: int = int(resource_state.get("wood", 0))
 	var wood_capacity: int = int(resource_state.get("wood_capacity", 0))
+	var food: int = int(resource_state.get("food", 0))
+	var food_capacity: int = int(resource_state.get("food_capacity", 0))
 	var rock: int = int(resource_state.get("rock", 0))
 	var rock_capacity: int = int(resource_state.get("rock_capacity", 0))
+	var iron: int = int(resource_state.get("iron", 0))
+	var iron_capacity: int = int(resource_state.get("iron_capacity", 0))
 	var population: int = int(resource_state.get("population", 0))
 
 	gold_label.text = "%s/%s" % [gold, gold_capacity]
@@ -71,9 +91,17 @@ func update_values(resource_state: Dictionary) -> void:
 	wood_bar.max_value = maxf(float(wood_capacity), 1.0)
 	wood_bar.value = wood
 
+	food_label.text = "%s/%s" % [food, food_capacity]
+	food_bar.max_value = maxf(float(food_capacity), 1.0)
+	food_bar.value = food
+
 	rock_label.text = "%s/%s" % [rock, rock_capacity]
 	rock_bar.max_value = maxf(float(rock_capacity), 1.0)
 	rock_bar.value = rock
+
+	iron_label.text = "%s/%s" % [iron, iron_capacity]
+	iron_bar.max_value = maxf(float(iron_capacity), 1.0)
+	iron_bar.value = iron
 
 	population_label.text = str(population)
 
