@@ -1,28 +1,35 @@
-﻿extends RefCounted
+extends RefCounted
 
 const GOLD_CAPACITY_BASE := 50
 const WOOD_CAPACITY_BASE := 50
+const ROCK_CAPACITY_BASE := 50
 const TAX_GOLD_PER_5_POPULATION := 1
 const GOLD_MINE_INCOME := 1
+const ROCK_MINE_INCOME := 1
 const SAWMILL_WOOD_INCOME := 1
 const VILLAGE_POPULATION := 5
 const CASTLE_POPULATION := 10
 
 var gold := 0
 var wood := 0
+var rock := 0
 var population := 0
 var gold_capacity := GOLD_CAPACITY_BASE
 var wood_capacity := WOOD_CAPACITY_BASE
+var rock_capacity := ROCK_CAPACITY_BASE
 var gold_income := 0
 var wood_income := 0
+var rock_income := 0
 
 
 func recalculate_from_map(map_tiles: Dictionary) -> void:
 	population = 0
 	gold_capacity = GOLD_CAPACITY_BASE
 	wood_capacity = WOOD_CAPACITY_BASE
+	rock_capacity = ROCK_CAPACITY_BASE
 	gold_income = 0
 	wood_income = 0
+	rock_income = 0
 
 	for cell_key in map_tiles.keys():
 		var cell: Vector2i = cell_key
@@ -38,11 +45,13 @@ func recalculate_from_map(map_tiles: Dictionary) -> void:
 	gold_income += int(population / 5) * TAX_GOLD_PER_5_POPULATION
 	gold = clampi(gold, 0, gold_capacity)
 	wood = clampi(wood, 0, wood_capacity)
+	rock = clampi(rock, 0, rock_capacity)
 
 
 func collect_income() -> void:
 	gold = clampi(gold + gold_income, 0, gold_capacity)
 	wood = clampi(wood + wood_income, 0, wood_capacity)
+	rock = clampi(rock + rock_income, 0, rock_capacity)
 
 
 func get_state() -> Dictionary:
@@ -51,9 +60,12 @@ func get_state() -> Dictionary:
 		"gold_capacity": gold_capacity,
 		"wood": wood,
 		"wood_capacity": wood_capacity,
+		"rock": rock,
+		"rock_capacity": rock_capacity,
 		"population": population,
 		"gold_income": gold_income,
 		"wood_income": wood_income,
+		"rock_income": rock_income,
 	}
 
 
@@ -66,7 +78,7 @@ func _apply_building_economy(building_type: String, terrain_type: String) -> voi
 		"mine":
 			if terrain_type == "gold":
 				gold_income += GOLD_MINE_INCOME
+			elif terrain_type == "rocks":
+				rock_income += ROCK_MINE_INCOME
 		"sawmill":
 			wood_income += SAWMILL_WOOD_INCOME
-
-

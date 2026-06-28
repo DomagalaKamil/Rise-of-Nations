@@ -44,8 +44,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			_open_tile_menu_from_mouse()
 			return
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			_open_tile_menu_from_mouse()
 
 	camera_controller.handle_input(event)
 

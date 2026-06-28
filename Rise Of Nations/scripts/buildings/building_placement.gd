@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 signal building_clicked(cell: Vector2i, building_index: int, viewport_position: Vector2)
 
@@ -141,7 +141,7 @@ func _add_building_icon(cell: Vector2i, building_name: String, index: int) -> vo
 
 
 func _on_building_icon_input_event(viewport: Viewport, event: InputEvent, _shape_idx: int, cell: Vector2i, building_index: int) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		viewport.set_input_as_handled()
 		building_clicked.emit(cell, building_index, event.position)
 
