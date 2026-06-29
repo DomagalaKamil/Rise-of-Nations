@@ -6,15 +6,10 @@ const ROCK_CAPACITY_BASE := 50
 const IRON_CAPACITY_BASE := 50
 const FOOD_CAPACITY_BASE := 50
 const RESOURCE_COLLECTION_INTERVAL := 30.0
-const FARM_BASE_PRODUCTION_TIME := 30.0
-const FARM_MIN_PRODUCTION_TIME := 1.0
+const BASE_PRODUCTION_TIME := 30.0
+const MIN_PRODUCTION_TIME := 1.0
+const STORAGE_CAPACITY_PER_LEVEL := 5
 const TAX_GOLD_PER_5_POPULATION := 1
-const GOLD_MINE_INCOME := 1
-const ROCK_MINE_INCOME := 1
-const IRON_MINE_INCOME := 1
-const SAWMILL_WOOD_INCOME := 1
-const FARM_BASE_FOOD_INCOME := 1
-const FISHING_FOOD_INCOME := 1
 const VILLAGE_POPULATION := 5
 const CASTLE_POPULATION := 10
 
@@ -34,8 +29,12 @@ var wood_income := 0
 var rock_income := 0
 var iron_income := 0
 var food_income := 0
+var defense_value := 0
+var movement_bonus := 0
+var army_bonus := 0
+var tax_gold_income := 0
 var resource_collection_progress := 0.0
-var food_production_progress: Dictionary = {}
+var production_progress: Dictionary = {}
 
 
 func recalculate_from_map(map_tiles: Dictionary) -> void:
@@ -50,6 +49,10 @@ func recalculate_from_map(map_tiles: Dictionary) -> void:
 	rock_income = 0
 	iron_income = 0
 	food_income = 0
+	defense_value = 0
+	movement_bonus = 0
+	army_bonus = 0
+	tax_gold_income = 0
 
 	for cell_key in map_tiles.keys():
 		var cell: Vector2i = cell_key
@@ -62,7 +65,8 @@ func recalculate_from_map(map_tiles: Dictionary) -> void:
 			var building_type: String = str(building_data.get("type", ""))
 			_apply_building_economy(building_type, terrain_type, building_data)
 
-	gold_income += int(population / 5) * TAX_GOLD_PER_5_POPULATION
+	tax_gold_income += int(population / 5) * TAX_GOLD_PER_5_POPULATION
+	gold_income += tax_gold_income
 	gold = clampi(gold, 0, gold_capacity)
 	wood = clampi(wood, 0, wood_capacity)
 	rock = clampi(rock, 0, rock_capacity)
@@ -71,8 +75,8 @@ func recalculate_from_map(map_tiles: Dictionary) -> void:
 
 
 func collect_income(map_tiles: Dictionary, delta_seconds: float) -> void:
-	_collect_timed_resources(delta_seconds)
-	_collect_food_from_buildings(map_tiles, delta_seconds)
+	_collect_tax_income(delta_seconds)
+	_collect_building_resources(map_tiles, delta_seconds)
 
 
 func can_afford_cost(cost: Dictionary) -> bool:
@@ -95,6 +99,7 @@ func spend_cost(cost: Dictionary) -> bool:
 	food -= int(cost.get("food", 0))
 	return true
 
+
 func get_state() -> Dictionary:
 	return {
 		"gold": gold,
@@ -113,89 +118,159 @@ func get_state() -> Dictionary:
 		"rock_income": rock_income,
 		"iron_income": iron_income,
 		"food_income": food_income,
+		"defense_value": defense_value,
+		"movement_bonus": movement_bonus,
+		"army_bonus": army_bonus,
 	}
 
 
-func _collect_timed_resources(delta_seconds: float) -> void:
+func _collect_tax_income(delta_seconds: float) -> void:
 	resource_collection_progress += delta_seconds
 	while resource_collection_progress >= RESOURCE_COLLECTION_INTERVAL:
 		resource_collection_progress -= RESOURCE_COLLECTION_INTERVAL
-		gold = clampi(gold + gold_income, 0, gold_capacity)
-		wood = clampi(wood + wood_income, 0, wood_capacity)
-		rock = clampi(rock + rock_income, 0, rock_capacity)
-		iron = clampi(iron + iron_income, 0, iron_capacity)
+		gold = clampi(gold + tax_gold_income, 0, gold_capacity)
 
 
-func _collect_food_from_buildings(map_tiles: Dictionary, delta_seconds: float) -> void:
+func _collect_building_resources(map_tiles: Dictionary, delta_seconds: float) -> void:
 	var active_producers: Dictionary = {}
 
 	for cell_key in map_tiles.keys():
 		var cell: Vector2i = cell_key
 		var tile_data: Dictionary = map_tiles[cell]
+		var terrain_type: String = str(tile_data.get("terrain_type", ""))
 		var buildings: Array = tile_data.get("buildings", [])
 
 		for building_index in range(buildings.size()):
 			var building_data: Dictionary = buildings[building_index]
 			var building_type: String = str(building_data.get("type", ""))
-			if building_type != "farm" and building_type != "fishing":
+			var resource_type: String = _get_produced_resource_type(building_type, terrain_type)
+			if resource_type == "":
 				continue
 
 			var production_key: String = _get_building_key(cell, building_index)
 			active_producers[production_key] = true
-			var production_time: float = _get_food_production_time(building_type, building_data)
-			var harvest_amount: int = _get_food_harvest_amount(building_type, building_data)
-			var progress: float = float(food_production_progress.get(production_key, 0.0)) + delta_seconds
+			var production_time: float = _get_production_time(building_type, building_data)
+			var harvest_amount: int = _get_harvest_amount(building_type, building_data)
+			var progress: float = float(production_progress.get(production_key, 0.0)) + delta_seconds
 
 			while progress >= production_time:
 				progress -= production_time
-				food = clampi(food + harvest_amount, 0, food_capacity)
+				_add_resource_amount(resource_type, harvest_amount)
 
-			food_production_progress[production_key] = progress
+			production_progress[production_key] = progress
 
-	for production_key_value in food_production_progress.keys():
+	for production_key_value in production_progress.keys():
 		var production_key: String = str(production_key_value)
 		if not active_producers.has(production_key):
-			food_production_progress.erase(production_key)
+			production_progress.erase(production_key)
 
 
 func _apply_building_economy(building_type: String, terrain_type: String, building_data: Dictionary) -> void:
+	var upgrades: Dictionary = building_data.get("upgrades", {})
+
 	match building_type:
 		"village":
-			population += VILLAGE_POPULATION
+			population += VILLAGE_POPULATION + (_get_upgrade_bonus(upgrades, "housing") * 5)
+			tax_gold_income += _get_upgrade_bonus(upgrades, "marketplace")
+			movement_bonus += _get_upgrade_bonus(upgrades, "roads")
+			var village_storage_bonus: int = _get_storage_bonus(upgrades, "local_storage")
+			food_capacity += village_storage_bonus
+			wood_capacity += village_storage_bonus
+			defense_value += _get_upgrade_bonus(upgrades, "town_watch")
 		"castle":
 			population += CASTLE_POPULATION
+			gold_capacity += _get_storage_bonus(upgrades, "vault")
+			food_capacity += _get_storage_bonus(upgrades, "granary")
+			army_bonus += _get_upgrade_bonus(upgrades, "barracks")
+			defense_value += _get_upgrade_bonus(upgrades, "stone_walls")
+			tax_gold_income += _get_upgrade_bonus(upgrades, "administration")
+		"farm":
+			food_capacity += _get_storage_bonus(upgrades, "storage_barns")
+			food_income += _get_harvest_amount(building_type, building_data)
+		"fishing":
+			food_capacity += _get_storage_bonus(upgrades, "fish_storage")
+			food_income += _get_harvest_amount(building_type, building_data)
+		"sawmill":
+			wood_capacity += _get_storage_bonus(upgrades, "lumber_storage")
+			wood_income += _get_harvest_amount(building_type, building_data)
+		"mine":
+			var storage_bonus: int = _get_storage_bonus(upgrades, "ore_storage")
+			if terrain_type == "gold":
+				gold_capacity += storage_bonus
+				gold_income += _get_harvest_amount(building_type, building_data)
+			elif terrain_type == "rocks":
+				rock_capacity += storage_bonus
+				rock_income += _get_harvest_amount(building_type, building_data)
+			elif terrain_type == "iron":
+				iron_capacity += storage_bonus
+				iron_income += _get_harvest_amount(building_type, building_data)
+
+
+func _get_produced_resource_type(building_type: String, terrain_type: String) -> String:
+	match building_type:
+		"farm", "fishing":
+			return "food"
+		"sawmill":
+			return "wood"
 		"mine":
 			if terrain_type == "gold":
-				gold_income += GOLD_MINE_INCOME
+				return "gold"
 			elif terrain_type == "rocks":
-				rock_income += ROCK_MINE_INCOME
+				return "rock"
 			elif terrain_type == "iron":
-				iron_income += IRON_MINE_INCOME
+				return "iron"
+	return ""
+
+
+func _get_harvest_amount(building_type: String, building_data: Dictionary) -> int:
+	var upgrades: Dictionary = building_data.get("upgrades", {})
+	match building_type:
+		"farm":
+			return 1 + _get_upgrade_bonus(upgrades, "water_supply") + _get_upgrade_bonus(upgrades, "farmland")
+		"fishing":
+			return 1 + _get_upgrade_bonus(upgrades, "better_nets") + _get_upgrade_bonus(upgrades, "larger_boats") + _get_upgrade_bonus(upgrades, "fish_preservation")
 		"sawmill":
-			wood_income += SAWMILL_WOOD_INCOME
-		"farm", "fishing":
-			food_income += _get_food_harvest_amount(building_type, building_data)
+			return 1 + _get_upgrade_bonus(upgrades, "sharper_saws") + _get_upgrade_bonus(upgrades, "tree_management")
+		"mine":
+			return 1 + _get_upgrade_bonus(upgrades, "better_pickaxes") + _get_upgrade_bonus(upgrades, "deeper_tunnels")
+	return 0
 
 
-func _get_food_harvest_amount(building_type: String, building_data: Dictionary) -> int:
-	if building_type == "fishing":
-		return FISHING_FOOD_INCOME
-
+func _get_production_time(building_type: String, building_data: Dictionary) -> float:
 	var upgrades: Dictionary = building_data.get("upgrades", {})
-	var water_supply_level: int = int(upgrades.get("water_supply", 1))
-	var farmland_level: int = int(upgrades.get("farmland", 1))
-	return FARM_BASE_FOOD_INCOME + max(0, water_supply_level - 1) + max(0, farmland_level - 1)
+	var production_time_reduction := 0
+	match building_type:
+		"farm":
+			production_time_reduction = _get_upgrade_bonus(upgrades, "tool_quality") + _get_upgrade_bonus(upgrades, "workers_count")
+		"fishing":
+			production_time_reduction = _get_upgrade_bonus(upgrades, "skilled_fishermen")
+		"sawmill":
+			production_time_reduction = _get_upgrade_bonus(upgrades, "better_workers") + _get_upgrade_bonus(upgrades, "logging_paths")
+		"mine":
+			production_time_reduction = _get_upgrade_bonus(upgrades, "mine_carts") + _get_upgrade_bonus(upgrades, "worker_safety")
+	return maxf(MIN_PRODUCTION_TIME, BASE_PRODUCTION_TIME - float(production_time_reduction))
 
 
-func _get_food_production_time(building_type: String, building_data: Dictionary) -> float:
-	if building_type == "fishing":
-		return RESOURCE_COLLECTION_INTERVAL
+func _add_resource_amount(resource_type: String, amount: int) -> void:
+	match resource_type:
+		"gold":
+			gold = clampi(gold + amount, 0, gold_capacity)
+		"wood":
+			wood = clampi(wood + amount, 0, wood_capacity)
+		"rock":
+			rock = clampi(rock + amount, 0, rock_capacity)
+		"iron":
+			iron = clampi(iron + amount, 0, iron_capacity)
+		"food":
+			food = clampi(food + amount, 0, food_capacity)
 
-	var upgrades: Dictionary = building_data.get("upgrades", {})
-	var tool_quality_level: int = int(upgrades.get("tool_quality", 1))
-	var workers_count_level: int = int(upgrades.get("workers_count", 1))
-	var production_time_reduction: int = max(0, tool_quality_level - 1) + max(0, workers_count_level - 1)
-	return maxf(FARM_MIN_PRODUCTION_TIME, FARM_BASE_PRODUCTION_TIME - float(production_time_reduction))
+
+func _get_upgrade_bonus(upgrades: Dictionary, category_id: String) -> int:
+	return maxi(0, int(upgrades.get(category_id, 1)) - 1)
+
+
+func _get_storage_bonus(upgrades: Dictionary, category_id: String) -> int:
+	return _get_upgrade_bonus(upgrades, category_id) * STORAGE_CAPACITY_PER_LEVEL
 
 
 func _get_building_key(cell: Vector2i, building_index: int) -> String:

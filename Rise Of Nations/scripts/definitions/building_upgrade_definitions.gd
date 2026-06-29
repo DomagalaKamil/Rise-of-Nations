@@ -19,6 +19,120 @@ const BUILDING_UPGRADES := {
 			"name": "Increase farmland",
 			"description": "Increase food harvested",
 		},
+		"storage_barns": {
+			"name": "Storage barns",
+			"description": "Increase food storage capacity by 5",
+		},
+	},
+	"sawmill": {
+		"sharper_saws": {
+			"name": "Sharper saws",
+			"description": "Increase wood produced",
+		},
+		"better_workers": {
+			"name": "Better workers",
+			"description": "Decrease production time",
+		},
+		"logging_paths": {
+			"name": "Logging paths",
+			"description": "Decrease production time",
+		},
+		"tree_management": {
+			"name": "Tree management",
+			"description": "Increase wood produced",
+		},
+		"lumber_storage": {
+			"name": "Lumber storage",
+			"description": "Increase wood storage capacity by 5",
+		},
+	},
+	"mine": {
+		"better_pickaxes": {
+			"name": "Better pickaxes",
+			"description": "Increase mined resource amount",
+		},
+		"mine_carts": {
+			"name": "Mine carts",
+			"description": "Decrease production time",
+		},
+		"deeper_tunnels": {
+			"name": "Deeper tunnels",
+			"description": "Increase mined resource amount",
+		},
+		"worker_safety": {
+			"name": "Worker safety",
+			"description": "Decrease production time",
+		},
+		"ore_storage": {
+			"name": "Ore storage",
+			"description": "Increase mined resource storage capacity by 5",
+		},
+	},
+	"fishing": {
+		"better_nets": {
+			"name": "Better nets",
+			"description": "Increase food produced",
+		},
+		"larger_boats": {
+			"name": "Larger boats",
+			"description": "Increase food produced",
+		},
+		"skilled_fishermen": {
+			"name": "Skilled fishermen",
+			"description": "Decrease production time",
+		},
+		"fish_preservation": {
+			"name": "Fish preservation",
+			"description": "Increase food produced",
+		},
+		"fish_storage": {
+			"name": "Fish storage",
+			"description": "Increase food storage capacity by 5",
+		},
+	},
+	"village": {
+		"housing": {
+			"name": "Housing",
+			"description": "Increase population",
+		},
+		"marketplace": {
+			"name": "Marketplace",
+			"description": "Increase gold from taxes",
+		},
+		"roads": {
+			"name": "Roads",
+			"description": "Prepare movement bonuses for later",
+		},
+		"local_storage": {
+			"name": "Local storage",
+			"description": "Increase food and wood storage capacity by 5",
+		},
+		"town_watch": {
+			"name": "Town watch",
+			"description": "Increase defensive value for later",
+		},
+	},
+	"castle": {
+		"vault": {
+			"name": "Vault",
+			"description": "Increase gold storage capacity by 5",
+		},
+		"granary": {
+			"name": "Granary",
+			"description": "Increase food storage capacity by 5",
+		},
+		"barracks": {
+			"name": "Barracks",
+			"description": "Prepare army bonuses for later",
+		},
+		"stone_walls": {
+			"name": "Stone walls",
+			"description": "Increase defensive value for later",
+		},
+		"administration": {
+			"name": "Administration",
+			"description": "Increase gold from taxes",
+		},
 	},
 }
 
